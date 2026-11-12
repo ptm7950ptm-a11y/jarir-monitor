@@ -1,1 +1,44 @@
-<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><body dir="rtl" style="font-family:sans-serif;padding:2rem"><p>تم الإعداد. ستظهر البيانات هنا بعد انتهاء أول مسح (قد يستغرق عدة دقائق).</p></body>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تتبع أسعار جرير</title>
+<style>
+:root{--bg:#fafafa;--fg:#1a1a1a;--card:#fff;--mut:#6b6b6b;--bd:#e3e3e3;--dn:#0a7d33;--up:#c62828;--ln:#2563eb}
+@media (prefers-color-scheme:dark){:root{--bg:#141414;--fg:#ececec;--card:#1e1e1e;--mut:#9a9a9a;--bd:#333;--dn:#4ade80;--up:#f87171;--ln:#60a5fa}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,"Segoe UI",Tahoma,sans-serif}
+main{max-width:900px;margin:0 auto;padding:16px}h1{font-size:20px;margin:0 0 4px}.mut{color:var(--mut);font-size:13px}
+.bar{display:flex;gap:8px;margin:12px 0}input,select{padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--fg);font:inherit}
+input{flex:1;min-width:0}.row{background:var(--card);border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;padding:10px 12px;cursor:pointer}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.t{flex:1}.p{white-space:nowrap;font-weight:600}
+.dn{color:var(--dn)}.up{color:var(--up)}.ch{display:none;margin-top:8px}.row.open .ch{display:block}
+svg{width:100%;height:auto;direction:ltr}a{color:var(--ln)}
+</style></head><body><main>
+<h1>تتبع أسعار جرير</h1>
+<div class="mut">يتم تسجيل السعر عند تغيّره فقط. 0 منتج مُتتبَّع، منها 0 تغيّر سعره. آخر تحديث: 2026-11-12 14:07 (UTC)</div>
+<div class="bar"><input id="q" placeholder="ابحث باسم المنتج أو رقمه"><select id="f">
+<option value="">الكل</option><option value="dn">انخفض آخر مرة</option><option value="up">ارتفع آخر مرة</option></select></div>
+<div id="box"></div>
+<script type="application/json" id="d">[]</script>
+<script>
+const D=JSON.parse(document.getElementById('d').textContent),box=document.getElementById('box');
+const n=v=>v.toLocaleString('en-US',{maximumFractionDigits:2}),dt=t=>new Date(t).toLocaleDateString('en-GB');
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function chart(pts){const W=600,H=170,P=28,xs=pts.map(p=>+new Date(p[0])),ys=pts.map(p=>p[1]);
+const x0=xs[0],x1=xs[xs.length-1]||1,lo=Math.min(...ys),hi=Math.max(...ys),r=hi-lo||1;
+const X=t=>P+(x1===x0?0:(t-x0)/(x1-x0))*(W-2*P),Y=v=>H-P-(v-lo)/r*(H-2*P);
+let d='M'+X(xs[0])+' '+Y(ys[0]);for(let i=1;i<xs.length;i++)d+=' H'+X(xs[i])+' V'+Y(ys[i]);
+const dots=xs.map((t,i)=>`<circle cx="${X(t)}" cy="${Y(ys[i])}" r="3" fill="var(--ln)"><title>${dt(pts[i][0])}: ${n(ys[i])}</title></circle>`).join('');
+return `<svg viewBox="0 0 ${W} ${H}"><path d="${d}" fill="none" stroke="var(--ln)" stroke-width="2"/>${dots}
+<text x="${P}" y="14" font-size="11" fill="var(--mut)">${n(hi)}</text><text x="${P}" y="${H-6}" font-size="11" fill="var(--mut)">${n(lo)}</text>
+<text x="${W-P}" y="${H-6}" font-size="11" text-anchor="end" fill="var(--mut)">${dt(pts[0][0])} – ${dt(pts[pts.length-1][0])}</text></svg>`}
+function render(){const q=document.getElementById('q').value.trim().toLowerCase(),f=document.getElementById('f').value;let k=0,h='';
+for(const [sku,title,url,pts] of D){const c=pts[pts.length-1][1],p=pts[pts.length-2][1],pc=(c-p)/p*100,dir=c<p?'dn':'up';
+if(f&&f!==dir)continue;if(q&&!(title.toLowerCase().includes(q)||sku.includes(q)))continue;if(++k>150)break;
+const lo=Math.min(...pts.map(x=>x[1]));
+h+=`<div class="row" onclick="this.classList.toggle('open')"><div class="top"><div class="t">${esc(title)}</div>
+<div class="p">${n(c)} <span class="${dir}">${c<p?'▼':'▲'} ${Math.abs(pc).toFixed(1)}%</span></div></div>
+<div class="mut">كان ${n(p)} · أدنى سعر مسجّل ${n(lo)} · آخر تغيّر ${dt(pts[pts.length-1][0])} · ${pts.length} تسجيلات</div>
+<div class="ch">${chart(pts)}<a href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">فتح المنتج في جرير</a></div></div>`}
+box.innerHTML=h||'<p class="mut">لا توجد نتائج بعد. تظهر المنتجات هنا بعد أن يتغير سعرها مرة واحدة على الأقل.</p>'}
+document.getElementById('q').oninput=render;document.getElementById('f').onchange=render;render();
+</script></main></body></html>
